@@ -1,0 +1,48 @@
+name: Generar APK - Rumbo a Platino
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Proyecto_Android_Rumbo_a_Platino_v1_2_fix_ARPU.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Instalar componentes Android
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Descomprimir proyecto
+        run: |
+          unzip -o Proyecto_Android_Rumbo_a_Platino_v1_2_fix_ARPU.zip -d .
+          test -f CalculadoraComisionesAndroid/settings.gradle
+          test -f CalculadoraComisionesAndroid/app/build.gradle
+
+      - name: Compilar APK
+        working-directory: CalculadoraComisionesAndroid
+        run: gradle --no-daemon assembleDebug
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Calculadora-Rumbo-a-Platino-V1.2
+          path: CalculadoraComisionesAndroid/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
